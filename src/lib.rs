@@ -52,6 +52,8 @@ pub fn create_longest_substring(val: &str) -> Result<String, Error> {
 
     let mut max_end = 0;
     let mut max_len = 0;
+
+    // Length of valid sequential substring predecessor
     let mut prev_valid_len = 0;
 
     for (index, char) in val.chars().cycle().enumerate() {
@@ -95,10 +97,12 @@ pub fn create_longest_substring(val: &str) -> Result<String, Error> {
                     v => v,
                 }
             }
-        } else if stack.is_empty() {
-            Some(prev_valid_len + 1)
         } else {
-            None
+            stack
+                .last()
+                // Calculate distance between current character and last brace in stack
+                .map(|prev| index - prev.index)
+                .or_else(|| Some(prev_valid_len + 1))
         } {
             if len > max_len {
                 if len >= val.len() {
@@ -132,5 +136,67 @@ mod tests {
     #[test]
     fn empty() {
         assert_eq!(create_longest_substring("").unwrap(), "");
+        assert_eq!(create_longest_substring("(})").unwrap(), "");
+        assert_eq!(create_longest_substring("([)]]})").unwrap(), "");
+        assert_eq!(create_longest_substring("(((").unwrap(), "");
+    }
+
+    #[test]
+    fn without_braces() {
+        assert_eq!(create_longest_substring("abc").unwrap(), "Infinite");
+        assert_eq!(create_longest_substring("pasd").unwrap(), "Infinite");
+        assert_eq!(create_longest_substring("zxc").unwrap(), "Infinite");
+    }
+
+    #[test]
+    fn with_equal_braces() {
+        assert_eq!(create_longest_substring("(a(b)c)").unwrap(), "Infinite");
+        assert_eq!(create_longest_substring("{(a[b]c)}").unwrap(), "Infinite");
+        assert_eq!(create_longest_substring("a)b)(c(d").unwrap(), "Infinite");
+        assert_eq!(
+            create_longest_substring("[[g][f]]d))j}{k}{(l(").unwrap(),
+            "Infinite"
+        );
+        assert_eq!(
+            create_longest_substring(")p)}{q}i{((x[[]z[]y]o").unwrap(),
+            "Infinite"
+        );
+        assert_eq!(create_longest_substring("q))]w[e((r").unwrap(), "Infinite");
+    }
+
+    #[test]
+    fn finite() {
+        assert_eq!(create_longest_substring("))[((").unwrap(), "(())");
+        assert_eq!(create_longest_substring("])}([{}").unwrap(), "([{}])");
+        assert_eq!(create_longest_substring(")}([{}]").unwrap(), "([{}])");
+        assert_eq!(
+            create_longest_substring("])}b(a[{efg}").unwrap(),
+            "b(a[{efg}])"
+        );
+        assert_eq!(
+            create_longest_substring(")}(m[{o}]oops").unwrap(),
+            "(m[{o}]oops)"
+        );
+        assert_eq!(create_longest_substring("}}}a(((").unwrap(), "a");
+        assert_eq!(create_longest_substring("(a(b(d").unwrap(), "a");
+        assert_eq!(create_longest_substring("(a(bc(d").unwrap(), "bc");
+        assert_eq!(create_longest_substring("ab()(d").unwrap(), "dab()");
+        assert_eq!(create_longest_substring("ab()(}}d").unwrap(), "dab()");
+    }
+
+    #[test]
+    fn invalid() {
+        assert_eq!(
+            create_longest_substring("(🖐)){✊}").unwrap_err(),
+            Error::NonByteChar
+        );
+        assert_eq!(
+            create_longest_substring("(🖐){✊}").unwrap_err(),
+            Error::NonByteChar
+        );
+        assert_eq!(
+            create_longest_substring("🦅").unwrap_err(),
+            Error::NonByteChar
+        );
     }
 }
