@@ -1,12 +1,12 @@
 //!
-//! Creates longest possible substring with valid braces of given infinite string using its
+//! Creates longest possible substring with valid brackets of given infinite string using its
 //! characters.
 //!
 
 ///
-/// Checks if provided char is a brace.
+/// Checks if provided char is a bracket.
 ///
-fn is_brace(val: char) -> bool {
+fn is_bracket(val: char) -> bool {
     match val {
         '{' | '[' | '(' | ')' | ']' | '}' => true,
         _ => false,
@@ -14,10 +14,10 @@ fn is_brace(val: char) -> bool {
 }
 
 ///
-/// Attempts to map given brace to its closing pair. Returns `None` if given char
-/// isn't opening brace.
+/// Attempts to map given bracket to its closing pair. Returns `None` if given char
+/// isn't opening bracket.
 ///
-fn opening_brace_to_closing(val: char) -> Option<char> {
+fn opening_bracket_to_closing(val: char) -> Option<char> {
     match val {
         '{' => Some('}'),
         '[' => Some(']'),
@@ -33,7 +33,7 @@ pub enum Error {
 }
 
 ///
-/// Produces longest substring with valid braces of infinite string `val` using its
+/// Produces longest substring with valid brackets of infinite string `val` using its
 /// characters. If string is infinite, returns "Infinite".
 ///
 /// Returns `Err` in case if string contains char encoded with size greater than one byte.
@@ -59,9 +59,12 @@ pub fn create_longest_substring(val: &str) -> Result<String, Error> {
         if char.len_utf8() > 1 || char.len_utf16() > 1 {
             // Encoded char size is greater than one byte
             return Err(Error::NonByteChar);
-        } else if let Some(len) = if is_brace(char) {
-            if let Some(brace) = opening_brace_to_closing(char) {
-                stack.push(CharPos { val: brace, index });
+        } else if let Some(len) = if is_bracket(char) {
+            if let Some(bracket) = opening_bracket_to_closing(char) {
+                stack.push(CharPos {
+                    val: bracket,
+                    index,
+                });
 
                 if stack.len() == val.len() {
                     // Break loop because longest subsequence either already found or 0
@@ -99,7 +102,7 @@ pub fn create_longest_substring(val: &str) -> Result<String, Error> {
         } else {
             stack
                 .last()
-                // Calculate distance between current character and last brace in stack
+                // Calculate distance between current character and last bracket in stack
                 .map(|prev| index - prev.index)
                 .or_else(|| Some(prev_valid_len + 1))
         } {
@@ -141,14 +144,14 @@ mod tests {
     }
 
     #[test]
-    fn without_braces() {
+    fn without_brackets() {
         assert_eq!(create_longest_substring("abc").unwrap(), "Infinite");
         assert_eq!(create_longest_substring("pasd").unwrap(), "Infinite");
         assert_eq!(create_longest_substring("zxc").unwrap(), "Infinite");
     }
 
     #[test]
-    fn with_equal_braces() {
+    fn with_equal_brackets() {
         assert_eq!(create_longest_substring("(a(b)c)").unwrap(), "Infinite");
         assert_eq!(create_longest_substring("{(a[b]c)}").unwrap(), "Infinite");
         assert_eq!(create_longest_substring("a)b)(c(d").unwrap(), "Infinite");
@@ -180,7 +183,10 @@ mod tests {
         assert_eq!(create_longest_substring("(a(b(d").unwrap(), "a");
         assert_eq!(create_longest_substring("(a(bc(d").unwrap(), "bc");
         assert_eq!(create_longest_substring("ab()(d").unwrap(), "dab()");
-        assert_eq!(create_longest_substring("ab()(}}d").unwrap(), "dab()");
+        assert_eq!(
+            create_longest_substring("ab()]abc()(}}dr").unwrap(),
+            "drab()"
+        );
     }
 
     #[test]
