@@ -1,6 +1,6 @@
 //!
-//! Library to create longest possible substring with valid braces of given infinite
-//! string using its characters.
+//! Creates longest possible substring with valid braces of given infinite string using its
+//! characters.
 //!
 
 ///
@@ -28,7 +28,7 @@ fn opening_brace_to_closing(val: char) -> Option<char> {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Error {
-    // Encoded char size is greater than 1 byte
+    /// Encoded char size is greater than 1 byte
     NonByteChar,
 }
 
@@ -37,7 +37,6 @@ pub enum Error {
 /// characters. If string is infinite, returns "Infinite".
 ///
 /// Returns `Err` in case if string contains char encoded with size greater than one byte.
-///
 ///
 /// Time complexity: O(n)
 /// Space complexity: O(n)
