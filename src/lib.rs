@@ -47,7 +47,7 @@ pub fn create_longest_substring(val: &str) -> Result<String, Error> {
         val: char,
         index: usize,
     }
-    let mut stack: Vec<CharPos> = Vec::new();
+    let mut brackets = Vec::<CharPos>::new();
 
     let mut max_end = 0;
     let mut max_len = 0;
@@ -55,27 +55,33 @@ pub fn create_longest_substring(val: &str) -> Result<String, Error> {
     // Length of valid sequential substring predecessor
     let mut prev_valid_len = 0;
 
-    for (index, char) in val.chars().cycle().enumerate() {
+    for (index, char) in val.chars().cycle().take(2 * val.len()).enumerate() {
         if char.len_utf8() > 1 || char.len_utf16() > 1 {
             // Encoded char size is greater than one byte
             return Err(Error::NonByteChar);
         } else if let Some(len) = if is_bracket(char) {
             if let Some(bracket) = opening_bracket_to_closing(char) {
-                stack.push(CharPos {
-                    val: bracket,
-                    index,
-                });
-
-                if stack.len() == val.len() {
+                if index >= val.len()
+                    && brackets
+                        .first()
+                        .map(|ch| ch.index == index - val.len())
+                        .unwrap_or(false)
+                    || brackets.len() + 1 == val.len()
+                {
                     // Break loop because longest subsequence either already found or 0
                     break;
                 } else {
+                    brackets.push(CharPos {
+                        val: bracket,
+                        index,
+                    });
+
                     None
                 }
             } else {
-                match stack.pop().and_then(|last| {
+                match brackets.pop().and_then(|last| {
                     if last.val == char {
-                        stack
+                        brackets
                             .last()
                             // Need to also capture characters between previous and last
                             .map(|prev| index - prev.index)
@@ -84,10 +90,10 @@ pub fn create_longest_substring(val: &str) -> Result<String, Error> {
                         None
                     }
                 }) {
-                    // Reset stack and prev_valid_len because current sequence is invalid
+                    // Reset brackets and prev_valid_len because current sequence is invalid
                     None => {
                         prev_valid_len = 0;
-                        stack.truncate(0);
+                        brackets.truncate(0);
 
                         // If end of the string is reached, no need to go further
                         if index >= val.len() {
@@ -100,9 +106,9 @@ pub fn create_longest_substring(val: &str) -> Result<String, Error> {
                 }
             }
         } else {
-            stack
+            brackets
                 .last()
-                // Calculate distance between current character and last bracket in stack
+                // Calculate distance between current character and last bracket in brackets
                 .map(|prev| index - prev.index)
                 .or_else(|| Some(prev_valid_len + 1))
         } {
@@ -114,7 +120,7 @@ pub fn create_longest_substring(val: &str) -> Result<String, Error> {
                 max_end = index + 1;
             }
 
-            if stack.is_empty() {
+            if brackets.is_empty() {
                 prev_valid_len = len;
             }
         }
@@ -138,6 +144,7 @@ mod tests {
     #[test]
     fn empty() {
         assert_eq!(create_longest_substring("").unwrap(), "");
+        assert_eq!(create_longest_substring("(").unwrap(), "");
         assert_eq!(create_longest_substring("(})").unwrap(), "");
         assert_eq!(create_longest_substring("([)]]})").unwrap(), "");
         assert_eq!(create_longest_substring("(((").unwrap(), "");
@@ -186,6 +193,14 @@ mod tests {
         assert_eq!(
             create_longest_substring("ab()]abc()(}}dr").unwrap(),
             "drab()"
+        );
+        assert_eq!(
+            create_longest_substring("(aaaaaaabbbbbcccccc").unwrap(),
+            "aaaaaaabbbbbcccccc"
+        );
+        assert_eq!(
+            create_longest_substring(")aaaaaaabbbbbcccccc").unwrap(),
+            "aaaaaaabbbbbcccccc"
         );
     }
 
