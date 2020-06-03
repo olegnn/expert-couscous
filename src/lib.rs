@@ -1,7 +1,11 @@
+//!
+//! Library to create longest possible substring with valid braces of given infinite
+//! string using its characters.
+//!
 
 ///
 /// Checks if provided char is a brace.
-/// 
+///
 fn is_brace(val: char) -> bool {
     match val {
         '{' | '[' | '(' | ')' | ']' | '}' => true,
@@ -12,7 +16,7 @@ fn is_brace(val: char) -> bool {
 ///
 /// Attempts to map given brace to its closing pair. Returns `None` if given char
 /// isn't opening brace.
-/// 
+///
 fn opening_brace_to_closing(val: char) -> Option<char> {
     match val {
         '{' => Some('}'),
@@ -25,19 +29,19 @@ fn opening_brace_to_closing(val: char) -> Option<char> {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Error {
     // Encoded char size is greater than 1 byte
-    NonByteChar
+    NonByteChar,
 }
 
 ///
 /// Produces longest substring with valid braces of infinite string `val` using its
-/// characters. If string is infinite, returns "Infinite". 
-/// 
+/// characters. If string is infinite, returns "Infinite".
+///
 /// Returns `Err` in case if string contains char encoded with size greater than one byte.
-/// 
-/// 
+///
+///
 /// Time complexity: O(n)
 /// Space complexity: O(n)
-/// 
+///
 pub fn create_longest_substring(val: &str) -> Result<String, Error> {
     #[derive(Debug, Copy, Clone)]
     struct CharPos {
@@ -51,9 +55,9 @@ pub fn create_longest_substring(val: &str) -> Result<String, Error> {
     let mut prev_valid_len = 0;
 
     for (index, char) in val.chars().cycle().enumerate() {
-        if char.len_utf8() > 1 || char.len_utf16() > 1 { 
+        if char.len_utf8() > 1 || char.len_utf16() > 1 {
             // Encoded char size is greater than one byte
-            return Err(Error::NonByteChar); 
+            return Err(Error::NonByteChar);
         } else if let Some(len) = if is_brace(char) {
             if let Some(brace) = opening_brace_to_closing(char) {
                 stack.push(CharPos { val: brace, index });
@@ -110,17 +114,15 @@ pub fn create_longest_substring(val: &str) -> Result<String, Error> {
         }
     }
 
-    Ok(
-        if max_end > val.len() {
-            format!(
-                "{}{}",
-                &val[max_end - max_len..val.len()],
-                &val[0..max_end - val.len()]
-            )
-        } else {
-            val[max_end - max_len..max_end].to_owned()
-        }
-    )
+    Ok(if max_end > val.len() {
+        format!(
+            "{}{}",
+            &val[max_end - max_len..val.len()],
+            &val[0..max_end - val.len()]
+        )
+    } else {
+        val[max_end - max_len..max_end].to_owned()
+    })
 }
 
 #[cfg(test)]
