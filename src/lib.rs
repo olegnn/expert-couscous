@@ -66,7 +66,6 @@ pub fn create_longest_substring(val: &str) -> Result<String, Error> {
                         .first()
                         .map(|ch| ch.index == index - val.len())
                         .unwrap_or(false)
-                    || brackets.len() + 1 == val.len()
                 {
                     // Break loop because longest subsequence either already found or 0
                     break;
@@ -79,7 +78,7 @@ pub fn create_longest_substring(val: &str) -> Result<String, Error> {
                     None
                 }
             } else {
-                match brackets.pop().and_then(|last| {
+                let res = brackets.pop().and_then(|last| {
                     if last.val == char {
                         brackets
                             .last()
@@ -89,21 +88,20 @@ pub fn create_longest_substring(val: &str) -> Result<String, Error> {
                     } else {
                         None
                     }
-                }) {
+                });
+
+                if res.is_none() {
                     // Reset brackets and prev_valid_len because current sequence is invalid
-                    None => {
-                        prev_valid_len = 0;
-                        brackets.truncate(0);
+                    prev_valid_len = 0;
+                    brackets.truncate(0);
 
-                        // If end of the string is reached, no need to go further
-                        if index >= val.len() {
-                            break;
-                        }
-
-                        None
+                    // If end of the string is reached, no need to go further
+                    if index >= val.len() {
+                        break;
                     }
-                    v => v,
                 }
+
+                res
             }
         } else {
             brackets
@@ -116,6 +114,7 @@ pub fn create_longest_substring(val: &str) -> Result<String, Error> {
                 if len >= val.len() {
                     return Ok("Infinite".to_owned());
                 }
+
                 max_len = len;
                 max_end = index + 1;
             }
